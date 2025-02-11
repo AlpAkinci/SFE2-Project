@@ -8,3 +8,6 @@ MileStone 1 Requirements
 - Divvy up roles for current plan (more responsibilities will be given as we add onto software as we all see best fit)
 
 Made Edits to README.md for commit
+
+February 11, 2025: Practicing commits
+Description: Hi hello hi, ok bye, any changes I make will be documented here
