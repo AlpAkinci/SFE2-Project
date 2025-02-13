@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Left Drawer Button (☰) -->
+    <item
+        android:id="@+id/action_open_left_drawer"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="Keyword Organizer"
+        android:showAsAction="always"/>
+
+    <!-- Right Drawer Button (☰) -->
+    <item
+        android:id="@+id/action_open_right_drawer"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="Inbox Drawer"
+        android:showAsAction="always"/>
+
+</menu>

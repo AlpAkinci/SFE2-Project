@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Main Content -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Toolbar (Left and Right Drawer Buttons) -->
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:title="Email Organizer"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:navigationIcon="@android:drawable/ic_menu_sort_by_size">
+
+            <!-- Right-side Button (Mirrors Left) -->
+            <ImageButton
+                android:id="@+id/right_drawer_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_sort_by_size"
+                android:layout_gravity="end"
+                android:contentDescription="Open Inbox Drawer"/>
+        </androidx.appcompat.widget.Toolbar>
+
+        <!-- Placeholder Content -->
+        <TextView
+            android:id="@+id/email_placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="16dp"
+            android:text="@string/email_placeholder"
+            android:textSize="18sp"/>
+    </LinearLayout>
+
+    <!-- Left Drawer (Keyword Organizer) -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_left_view"
+        android:layout_width="250dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:menu="@menu/left_menu"
+        app:headerLayout="@layout/nav_header_main"/>
+
+    <!-- Right Drawer (Inbox Only) -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_right_view"
+        android:layout_width="250dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        app:menu="@menu/right_menu"
+        app:headerLayout="@layout/nav_header_main"/>
+
+</androidx.drawerlayout.widget.DrawerLayout>
