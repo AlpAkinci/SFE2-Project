@@ -11,3 +11,12 @@ Made Edits to README.md for commit
 
 February 11, 2025: Practicing commits
 Description: Hi hello hi, ok bye, any changes I make will be documented here
+
+February 21, 2025:
+- changed icons within right_menu.xml
+- created ovals in place of the items within the left and right toolbars with menu_item_background.xml
+- established color within the ovals, along with gradients in the background (background_gradient.xml)
+- changed the icon background
+- 1st Task: get rid of white background in toolbar popups, and just include the items
+- 2nd Task: change actual toolbar icons on the top left and top right
+- 3rd TasK: finalize what toolbar items are actually going to be necessary for the final UI

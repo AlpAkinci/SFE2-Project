@@ -4,20 +4,20 @@
     <!-- Keyword Organizer -->
     <item
         android:id="@+id/nav_keywords"
-        android:title="Keyword Organizer"
-        android:icon="@android:drawable/ic_menu_agenda"/>
+        android:title="Preset Organizer"
+        android:icon="@android:drawable/ic_menu_compass"/>
 
     <!-- Starred -->
     <item
         android:id="@+id/nav_starred"
         android:title="Starred"
-        android:icon="@android:drawable/btn_star"/>
+        android:icon="@android:drawable/btn_star_big_off"/>
 
     <!-- Favorites -->
     <item
         android:id="@+id/nav_favorites"
         android:title="Favorites"
-        android:icon="@android:drawable/ic_menu_gallery"/>
+        android:icon="@android:drawable/star_on"/>
 
     <!-- Snoozed -->
     <item

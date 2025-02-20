@@ -10,6 +10,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@drawable/background_gradient"
         android:orientation="vertical">
 
         <!-- Toolbar (Left and Right Drawer Buttons) -->
@@ -17,8 +18,8 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:title="Email Organizer"
+            android:background="#52A6EB"
+            app:title="Good Afternoon, Alp"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
             app:navigationIcon="@android:drawable/ic_menu_sort_by_size">
 
@@ -28,7 +29,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_sort_by_size"
+                android:src="@android:drawable/ic_media_rew"
                 android:layout_gravity="end"
                 android:contentDescription="Open Inbox Drawer"/>
         </androidx.appcompat.widget.Toolbar>
@@ -51,7 +52,9 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         app:menu="@menu/left_menu"
-        app:headerLayout="@layout/nav_header_main"/>
+        app:headerLayout="@layout/nav_header_main"
+        app:itemBackground="@drawable/menu_item_bg"
+        app:itemTextAppearance="@style/NavigationMenuItemStyle"/>
 
     <!-- Right Drawer (Inbox Only) -->
     <com.google.android.material.navigation.NavigationView
@@ -60,6 +63,8 @@
         android:layout_height="match_parent"
         android:layout_gravity="end"
         app:menu="@menu/right_menu"
-        app:headerLayout="@layout/nav_header_main"/>
+        app:headerLayout="@layout/nav_header_main"
+        app:itemBackground="@drawable/menu_item_bg"
+        app:itemTextAppearance="@style/NavigationMenuItemStyle"/>
 
 </androidx.drawerlayout.widget.DrawerLayout>

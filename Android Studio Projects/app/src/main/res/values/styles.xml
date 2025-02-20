@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="NavigationMenuItemStyle">
+        <item name="android:paddingTop">16dp</item>
+        <item name="android:paddingBottom">16dp</item>
+        <item name="android:minHeight">64dp</item>
+        <item name="android:background">@drawable/menu_item_bg</item>
+    </style>
+</resources>
