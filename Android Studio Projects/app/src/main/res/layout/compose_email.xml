@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@android:color/background_light">
+
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar_compose"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
+        app:navigationIcon="@android:drawable/ic_media_previous"
+        app:title=""
+        app:menu="@menu/menu_compose_toolbar" />
+
+    <!-- FROM dropdown -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="From"
+        android:textStyle="bold"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp" />
+
+    <Spinner
+        android:id="@+id/spinner_from"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:entries="@array/sender_accounts"
+        android:padding="12dp"
+        android:spinnerMode="dropdown" />
+
+    <!-- TO field -->
+    <EditText
+        android:id="@+id/edit_to"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="To"
+        android:inputType="textEmailAddress"
+        android:padding="12dp"
+        android:backgroundTint="@android:color/darker_gray" />
+
+    <!-- SUBJECT field -->
+    <EditText
+        android:id="@+id/edit_subject"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Subject"
+        android:inputType="text"
+        android:padding="12dp"
+        android:layout_marginTop="4dp"
+        android:backgroundTint="@android:color/darker_gray" />
+
+    <!-- BODY field -->
+    <EditText
+        android:id="@+id/edit_body"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:hint="Compose email"
+        android:inputType="textMultiLine"
+        android:gravity="top"
+        android:padding="12dp"
+        android:backgroundTint="@android:color/darker_gray"
+        android:layout_marginTop="4dp" />
+
+    <!-- ATTACHMENT file name preview -->
+    <TextView
+        android:id="@+id/text_attachment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@android:color/holo_green_dark"
+        android:textStyle="italic"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="4dp"
+        android:visibility="gone" />
+
+    <!-- Optional: Attach File Button (in addition to top icon) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_attach_file"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Attach File"
+        android:icon="@android:drawable/ic_menu_upload"
+        app:iconPadding="8dp"
+        app:cornerRadius="16dp"
+        app:iconTint="@android:color/white"
+        app:backgroundTint="@android:color/holo_green_dark"
+        android:textColor="@android:color/white"
+        android:layout_margin="16dp" />
+
+</LinearLayout>

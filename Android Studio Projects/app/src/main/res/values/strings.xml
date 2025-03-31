@@ -9,9 +9,15 @@
     <string name="nav_open">Open Navigation</string>
     <string name="nav_close">Close Navigation</string>
     <string name="email_placeholder">Your emails will appear here...</string>
-
-
     <string name="menu_home">Home</string>
     <string name="menu_gallery">Gallery</string>
     <string name="menu_slideshow">Slideshow</string>
+    <string name="attach">Attach</string>
+    <string name="send">Send</string>
+
+    <!-- Compose screen sender options -->
+    <string-array name="sender_accounts">
+        <item>alp.akinci78@gmail.com</item>
+        <item>demo@example.com</item>
+    </string-array>
 </resources>
