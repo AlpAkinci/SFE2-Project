@@ -20,3 +20,10 @@ February 21, 2025:
 - 1st Task: get rid of white background in toolbar popups, and just include the items
 - 2nd Task: change actual toolbar icons on the top left and top right
 - 3rd TasK: finalize what toolbar items are actually going to be necessary for the final UI
+
+March 30, 2025:
+- modified toolbar backgrounds to be transprent and properly spaced between each time
+- added searchbar, incorporated in activity_main.xml that references search_bar_background.xml
+- 1st Task: change actual toolbar icons on the top left and top right
+- 2nd TasK: finalize what toolbar items are actually going to be necessary for the final UI
+- 3rd Task: fix search bar orientation

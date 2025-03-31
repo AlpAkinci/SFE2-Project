@@ -19,9 +19,21 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="#52A6EB"
-            app:title="Good Afternoon, Alp"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-            app:navigationIcon="@android:drawable/ic_menu_sort_by_size">
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+
+            <!-- Search Bar -->
+            <EditText
+                android:id="@+id/search_bar"
+                android:layout_width="300dp"
+                android:layout_height="40dp"
+                android:layout_margin="8dp"
+                android:background="@drawable/search_bar_background"
+                android:hint="Good Afternoon, Alp..."
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:textSize="16sp"
+                android:singleLine="true"
+                android:imeOptions="actionSearch"/>
 
             <!-- Right-side Button (Mirrors Left) -->
             <ImageButton
@@ -51,6 +63,7 @@
         android:layout_width="250dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        android:background="@android:color/transparent"
         app:menu="@menu/left_menu"
         app:headerLayout="@layout/nav_header_main"
         app:itemBackground="@drawable/menu_item_bg"
@@ -62,6 +75,7 @@
         android:layout_width="250dp"
         android:layout_height="match_parent"
         android:layout_gravity="end"
+        android:background="@android:color/transparent"
         app:menu="@menu/right_menu"
         app:headerLayout="@layout/nav_header_main"
         app:itemBackground="@drawable/menu_item_bg"
