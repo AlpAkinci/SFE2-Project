@@ -22,7 +22,9 @@ February 21, 2025:
 - 3rd TasK: finalize what toolbar items are actually going to be necessary for the final UI
 
 March 30, 2025:
-- modified toolbar backgrounds to be transprent and properly spaced between each time
+- modified toolbar backgrounds to be transprent
+- tweaked shape of some items for a better aesthetic 
+- proper spacing between each item
 - added searchbar, incorporated in activity_main.xml that references search_bar_background.xml
 - 1st Task: change actual toolbar icons on the top left and top right
 - 2nd TasK: finalize what toolbar items are actually going to be necessary for the final UI
