@@ -2,8 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permission for file picker (needed for some older devices or sending attachments) -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- File picker permission (still relevant for older Android versions) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
 
     <application
         android:allowBackup="true"
@@ -16,7 +17,7 @@
         android:theme="@style/Theme.EmailOrginizerSFE2"
         tools:targetApi="31">
 
-        <!-- Main Activity -->
+        <!-- Launcher Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -28,12 +29,27 @@
             </intent-filter>
         </activity>
 
-        <!-- Compose Email Activity -->
+        <!-- Compose Email -->
         <activity
             android:name=".ui.ComposeEmailActivity"
             android:exported="false"
             android:label="Compose Email"
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar" />
+
+        <!-- Create Preset -->
+        <activity
+            android:name=".ui.CreatePresetActivity"
+            android:exported="false"
+            android:label="Create Preset"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar" />
+
+        <!-- Manage Presets -->
+        <activity
+            android:name=".ui.ManagePresetsActivity"
+            android:exported="false"
+            android:label="Manage Presets"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar" />
+
     </application>
 
 </manifest>

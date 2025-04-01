@@ -5,30 +5,31 @@
     <item
         android:id="@+id/nav_inbox"
         android:title="Inbox"
-        android:icon="@android:drawable/ic_menu_agenda"/>
+        android:icon="@android:drawable/ic_menu_agenda" />
 
     <!-- Spam -->
     <item
         android:id="@+id/nav_spam"
         android:title="Jobs"
-        android:icon="@android:drawable/ic_menu_report_image"/>
+        android:icon="@android:drawable/ic_menu_report_image" />
 
     <!-- Trash -->
     <item
         android:id="@+id/nav_trash"
         android:title="Trash"
-        android:icon="@android:drawable/ic_menu_delete"/>
+        android:icon="@android:drawable/ic_menu_delete" />
 
-    <!-- Categories Section -->
-
+    <!-- Static Items -->
     <item
         android:id="@+id/nav_manage_labels"
         android:title="Manage Presets"
-        android:icon="@android:drawable/ic_menu_preferences"/>
+        android:icon="@android:drawable/ic_menu_preferences" />
 
     <item
         android:id="@+id/nav_create_label"
         android:title="Create New Preset"
-        android:icon="@android:drawable/ic_menu_add"/>
+        android:icon="@android:drawable/ic_menu_add" />
 
+    <!-- Dynamic Presets Group -->
+    <group android:id="@+id/dynamic_presets_group" />
 </menu>

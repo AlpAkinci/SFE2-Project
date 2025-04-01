@@ -51,7 +51,7 @@
                 android:textSize="18sp" />
         </LinearLayout>
 
-        <!-- Right Drawer Button FLOATING on top-right -->
+        <!-- Right Drawer Button -->
         <ImageButton
             android:id="@+id/right_drawer_button"
             android:layout_width="wrap_content"
@@ -80,7 +80,7 @@
             style="@style/Widget.MaterialComponents.Button" />
     </FrameLayout>
 
-    <!-- Left Drawer -->
+    <!-- ✅ Fixed Left Drawer -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_left_view"
         android:layout_width="250dp"
