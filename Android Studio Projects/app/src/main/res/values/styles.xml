@@ -4,6 +4,12 @@
         <item name="android:paddingTop">16dp</item>
         <item name="android:paddingBottom">16dp</item>
         <item name="android:minHeight">64dp</item>
-        <item name="android:background">@drawable/menu_item_bg</item>
+        <item name="android:background">@drawable/ani_menu_item_bg</item>
+    </style>
+
+    <style name="AniNavigationMenuItemStyle" parent="TextAppearance.AppCompat.Body1">
+        <item name="android:textColor">#868DDC</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 </resources>

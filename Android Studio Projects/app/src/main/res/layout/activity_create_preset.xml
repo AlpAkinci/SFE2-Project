@@ -12,7 +12,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
-        android:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
+        android:navigationIcon="@android:drawable/ic_menu_revert"
         android:title="Create Preset"
         app:titleTextColor="@android:color/white" />
 
@@ -20,7 +20,8 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:background="@drawable/background_gradient">
 
         <LinearLayout
             android:orientation="vertical"
@@ -56,14 +57,14 @@
 
                 <EditText
                     android:id="@+id/edit_positive_keyword"
-                    android:hint="Add positive keyword"
+                    android:hint="Enter keyword"
                     android:layout_width="0dp"
                     android:layout_weight="1"
                     android:layout_height="wrap_content"/>
 
                 <Button
                     android:id="@+id/button_add_positive"
-                    android:text="Add +"
+                    android:text="Add"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
             </LinearLayout>
@@ -90,14 +91,14 @@
 
                 <EditText
                     android:id="@+id/edit_negative_keyword"
-                    android:hint="Add negative keyword"
+                    android:hint="Enter keyword"
                     android:layout_width="0dp"
                     android:layout_weight="1"
                     android:layout_height="wrap_content"/>
 
                 <Button
                     android:id="@+id/button_add_negative"
-                    android:text="Add -"
+                    android:text="Add"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
             </LinearLayout>
