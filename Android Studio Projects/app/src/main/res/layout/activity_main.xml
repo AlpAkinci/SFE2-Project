@@ -27,9 +27,6 @@
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
             <!-- Search bar -->
-
-            <!-- Email placeholder -->
-
             <EditText
                 android:id="@+id/search_bar"
                 android:layout_width="match_parent"
@@ -44,13 +41,22 @@
                 android:textSize="16sp" />
 
             <TextView
-                android:id="@+id/email_placeholder"
+                android:id="@+id/debug_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:padding="16dp"
-                android:text="@string/email_placeholder"
-                android:textSize="18sp" />
+                android:text="Loading emails..."
+                android:textSize="16sp"
+                android:padding="16dp"/>
+
+            <!-- Replace placeholder with RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_inbox"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="8dp"
+                android:clipToPadding="false"
+                android:paddingBottom="80dp"
+                android:scrollbars="vertical"/>
 
         </LinearLayout>
 
@@ -94,8 +100,7 @@
         app:headerLayout="@layout/nav_header_main"
         app:itemBackground="@drawable/ani_menu_item_bg"
         app:itemRippleColor="@drawable/ripple_overlay"
-        app:itemTextAppearance="@style/AniNavigationMenuItemStyle"
-        />
+        app:itemTextAppearance="@style/AniNavigationMenuItemStyle" />
 
     <!-- Right Drawer -->
     <com.google.android.material.navigation.NavigationView
