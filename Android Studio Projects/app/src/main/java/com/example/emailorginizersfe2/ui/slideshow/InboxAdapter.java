@@ -1,5 +1,9 @@
 package com.example.emailorginizersfe2.ui.slideshow;
 
+import android.graphics.Color;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 import com.example.emailorginizersfe2.R;
+import java.util.ArrayList;
 
 public class InboxAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int TYPE_EMAIL = 0;
@@ -16,9 +21,14 @@ public class InboxAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private final List<String> emails;
     private boolean isLoading = false;
+    private List<String> currentPositiveKeywords = new ArrayList<>();
 
     public InboxAdapter(List<String> emails) {
         this.emails = emails;
+    }
+
+    public void setKeywords(List<String> positiveKeywords) {
+        this.currentPositiveKeywords = positiveKeywords;
     }
 
     @NonNull
@@ -43,24 +53,46 @@ public class InboxAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
             // Parse email components
             String[] parts = emailData.split("\n");
-            String from = "";
-            String subject = "";
-            String preview = "";
+            String from = parts[0].replace("From: ", "");
+            String subject = parts[1].replace("Subject: ", "");
+            String preview = parts.length > 2 ? parts[2].replace("Preview: ", "") : "";
 
-            if (parts.length >= 1) from = parts[0].replace("From: ", "");
-            if (parts.length >= 2) subject = parts[1].replace("Subject: ", "");
-            if (parts.length >= 3) preview = parts[2].replace("Preview: ", "");
+            // Highlight keywords in subject
+            SpannableString spannableSubject = new SpannableString(subject);
+            for (String keyword : currentPositiveKeywords) {
+                if (keyword == null || keyword.isEmpty()) continue;
+
+                int start = subject.toLowerCase().indexOf(keyword.toLowerCase());
+                if (start >= 0) {
+                    spannableSubject.setSpan(
+                            new ForegroundColorSpan(Color.GREEN),
+                            start,
+                            start + keyword.length(),
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    );
+                }
+            }
 
             emailHolder.senderView.setText(from);
-            emailHolder.subjectView.setText(subject);
+            emailHolder.subjectView.setText(spannableSubject);
             emailHolder.previewView.setText(preview);
 
-            // Set different styling for read/unread (example)
-            boolean isRead = position % 3 == 0; // Replace with actual read status
-            emailHolder.itemView.setAlpha(isRead ? 0.7f : 1.0f);
-            emailHolder.subjectView.setTypeface(null, isRead ? android.graphics.Typeface.NORMAL : android.graphics.Typeface.BOLD);
+            // Set different styling based on match count
+            int matchCount = countMatches(subject + " " + preview, currentPositiveKeywords);
+            emailHolder.itemView.setAlpha(0.7f + (0.3f * Math.min(1, matchCount/3f)));
         }
-        // LoadingViewHolder doesn't need binding
+    }
+
+    private int countMatches(String text, List<String> keywords) {
+        int count = 0;
+        String lowerText = text.toLowerCase();
+        for (String keyword : keywords) {
+            if (keyword == null || keyword.isEmpty()) continue;
+            if (lowerText.contains(keyword.toLowerCase())) {
+                count++;
+            }
+        }
+        return count;
     }
 
     @Override

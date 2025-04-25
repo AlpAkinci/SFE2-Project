@@ -29,12 +29,13 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.mail.Message;
-import javax.mail.MessagingException;
 import javax.mail.internet.InternetAddress;
 import com.example.emailorginizersfe2.ui.slideshow.MailFetcher;
 
@@ -46,8 +47,9 @@ public class MainActivity extends AppCompatActivity {
     private InboxAdapter adapter;
     private final List<String> emailList = new ArrayList<>();
     private TextView debugInfo;
-
-    // Pagination variables
+    private List<String> currentPositiveKeywords = new ArrayList<>();
+    private List<String> currentNegativeKeywords = new ArrayList<>();
+    private boolean isFilteringActive = false;
     private boolean isLoading = false;
     private boolean hasMoreEmails = true;
     private int currentOffset = 0;
@@ -59,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         mailFetcher = new MailFetcher("vlogs1167@gmail.com", "zsujmctuzmbstbla");
         initializeViews();
         setupToolbar();
@@ -77,12 +78,8 @@ public class MainActivity extends AppCompatActivity {
         MaterialButton composeButton = findViewById(R.id.compose_button);
         recyclerView = findViewById(R.id.recycler_inbox);
         debugInfo = findViewById(R.id.debug_info);
-
-        composeButton.setOnClickListener(view ->
-                startActivity(new Intent(this, ComposeEmailActivity.class)));
-
-        rightDrawerButton.setOnClickListener(v ->
-                drawerLayout.openDrawer(GravityCompat.END));
+        composeButton.setOnClickListener(view -> startActivity(new Intent(this, ComposeEmailActivity.class)));
+        rightDrawerButton.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
     }
 
     private void setupRecyclerViewWithPagination() {
@@ -90,23 +87,16 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(layoutManager);
         adapter = new InboxAdapter(emailList);
         recyclerView.setAdapter(adapter);
-        recyclerView.addItemDecoration(
-                new DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
-        );
-
-        // Add scroll listener for pagination
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-
                 int visibleItemCount = layoutManager.getChildCount();
                 int totalItemCount = layoutManager.getItemCount();
                 int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
-
                 if (!isLoading && hasMoreEmails && dy > 0) {
-                    if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount
-                            && firstVisibleItemPosition >= 0) {
+                    if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount && firstVisibleItemPosition >= 0) {
                         loadMoreEmails();
                     }
                 }
@@ -117,9 +107,7 @@ public class MainActivity extends AppCompatActivity {
     private void setupToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawerLayout, toolbar, R.string.nav_open, R.string.nav_close);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.nav_open, R.string.nav_close);
         drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
     }
@@ -132,15 +120,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadInitialEmails() {
         if (isLoading) return;
-
         isLoading = true;
         adapter.setLoading(true);
-        debugInfo.setText("Loading initial emails...");
-
+        debugInfo.setText(isFilteringActive ? "Loading filtered emails..." : "Loading initial emails...");
         new Thread(() -> {
             try {
-                Message[] messages = mailFetcher.fetchInboxEmails(0, INITIAL_LOAD_COUNT);
-
+                Message[] messages = isFilteringActive ?
+                        mailFetcher.fetchFilteredEmails(0, INITIAL_LOAD_COUNT, currentPositiveKeywords, currentNegativeKeywords) :
+                        mailFetcher.fetchInboxEmails(0, INITIAL_LOAD_COUNT);
                 emailList.clear();
                 for (Message msg : messages) {
                     String from = InternetAddress.toString(msg.getFrom());
@@ -148,22 +135,54 @@ public class MainActivity extends AppCompatActivity {
                     String preview = getMessagePreview(msg);
                     emailList.add("From: " + from + "\nSubject: " + subject + "\nPreview: " + preview);
                 }
-
                 currentOffset = emailList.size();
                 hasMoreEmails = messages.length == INITIAL_LOAD_COUNT;
-
                 runOnUiThread(() -> {
                     adapter.notifyDataSetChanged();
-                    debugInfo.setText("Loaded " + emailList.size() + " emails");
+                    debugInfo.setText("Loaded " + emailList.size() + (isFilteringActive ? " filtered" : "") + " emails");
                     isLoading = false;
                     adapter.setLoading(false);
                 });
-
             } catch (Exception e) {
                 Log.e("INBOX", "Error loading emails", e);
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Error loading emails", Toast.LENGTH_LONG).show();
                     debugInfo.setText("Failed to load emails");
+                    isLoading = false;
+                    adapter.setLoading(false);
+                });
+            }
+        }).start();
+    }
+
+    private void loadMoreEmails() {
+        if (isLoading || !hasMoreEmails) return;
+        isLoading = true;
+        adapter.setLoading(true);
+        new Thread(() -> {
+            try {
+                Message[] messages = isFilteringActive ?
+                        mailFetcher.fetchFilteredEmails(currentOffset, PAGE_SIZE, currentPositiveKeywords, currentNegativeKeywords) :
+                        mailFetcher.fetchInboxEmails(currentOffset, PAGE_SIZE);
+                int initialSize = emailList.size();
+                for (Message msg : messages) {
+                    String from = InternetAddress.toString(msg.getFrom());
+                    String subject = msg.getSubject();
+                    String preview = getMessagePreview(msg);
+                    emailList.add("From: " + from + "\nSubject: " + subject + "\nPreview: " + preview);
+                }
+                currentOffset += messages.length;
+                hasMoreEmails = messages.length == PAGE_SIZE;
+                runOnUiThread(() -> {
+                    adapter.notifyItemRangeInserted(initialSize, messages.length);
+                    debugInfo.setText("Loaded " + emailList.size() + (isFilteringActive ? " filtered" : "") + " emails (total)");
+                    isLoading = false;
+                    adapter.setLoading(false);
+                });
+            } catch (Exception e) {
+                Log.e("INBOX", "Error loading more emails", e);
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Error loading more emails", Toast.LENGTH_LONG).show();
                     isLoading = false;
                     adapter.setLoading(false);
                 });
@@ -184,51 +203,32 @@ public class MainActivity extends AppCompatActivity {
         return "";
     }
 
-    private void loadMoreEmails() {
-        if (isLoading || !hasMoreEmails) return;
-
-        isLoading = true;
-        adapter.setLoading(true);
-
-        new Thread(() -> {
-            try {
-                Message[] messages = mailFetcher.fetchInboxEmails(currentOffset, PAGE_SIZE);
-
-                int initialSize = emailList.size();
-                for (Message msg : messages) {
-                    String from = InternetAddress.toString(msg.getFrom());
-                    String subject = msg.getSubject();
-                    String preview = getMessagePreview(msg);
-                    emailList.add("From: " + from + "\nSubject: " + subject + "\nPreview: " + preview);
-                }
-
-                currentOffset += messages.length;
-                hasMoreEmails = messages.length == PAGE_SIZE;
-
-                runOnUiThread(() -> {
-                    adapter.notifyItemRangeInserted(initialSize, messages.length);
-                    debugInfo.setText("Loaded " + emailList.size() + " emails (total)");
-                    isLoading = false;
-                    adapter.setLoading(false);
-                });
-
-            } catch (Exception e) {
-                Log.e("INBOX", "Error loading more emails", e);
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Error loading more emails", Toast.LENGTH_LONG).show();
-                    isLoading = false;
-                    adapter.setLoading(false);
-                });
-            }
-        }).start();
-    }
-
     private void refreshEmails() {
         currentOffset = 0;
         hasMoreEmails = true;
-        emailList.clear(); // Clear the existing list
-        adapter.notifyDataSetChanged(); // Notify adapter of the clear
+        emailList.clear();
+        adapter.notifyDataSetChanged();
         loadInitialEmails();
+    }
+
+    private void clearFilters() {
+        currentPositiveKeywords.clear();
+        currentNegativeKeywords.clear();
+        isFilteringActive = false;
+        refreshEmails();
+    }
+
+    private void handlePresetSelection(String presetName) {
+        SharedPreferences prefs = getSharedPreferences("presets", Context.MODE_PRIVATE);
+        String positive = prefs.getString(presetName + "_positive", "");
+        String negative = prefs.getString(presetName + "_negative", "");
+        currentPositiveKeywords = new ArrayList<>(Arrays.asList(positive.split(",")));
+        currentNegativeKeywords = new ArrayList<>(Arrays.asList(negative.split(",")));
+        currentPositiveKeywords.removeAll(Collections.singleton(""));
+        currentNegativeKeywords.removeAll(Collections.singleton(""));
+        isFilteringActive = !currentPositiveKeywords.isEmpty() || !currentNegativeKeywords.isEmpty();
+        showToast("Applying preset: " + presetName);
+        refreshEmails();
     }
 
     @Override
@@ -245,10 +245,8 @@ public class MainActivity extends AppCompatActivity {
     private void addSavedPresetsToDrawer() {
         Menu menu = leftNavView.getMenu();
         menu.removeGroup(PRESET_MENU_GROUP_ID);
-
         SharedPreferences prefs = getSharedPreferences("presets", Context.MODE_PRIVATE);
         Set<String> presetSet = prefs.getStringSet("preset_names", new HashSet<>());
-
         int index = 0;
         for (String name : presetSet) {
             menu.add(PRESET_MENU_GROUP_ID, 1000 + index++, Menu.NONE, name)
@@ -258,10 +256,9 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean handleLeftDrawerSelection(MenuItem item) {
         int id = item.getItemId();
-
         if (id == R.id.nav_inbox) {
-            Toast.makeText(this, "Refreshing emails...", Toast.LENGTH_SHORT).show();
-            refreshEmails();
+            clearFilters();
+            Toast.makeText(this, "Showing all emails", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_manage_labels) {
             startActivity(new Intent(this, ManagePresetsActivity.class));
         } else if (id == R.id.nav_create_label) {
@@ -269,27 +266,19 @@ public class MainActivity extends AppCompatActivity {
         } else if (item.getGroupId() == PRESET_MENU_GROUP_ID) {
             handlePresetSelection(item.getTitle().toString());
         }
-
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
 
     private boolean handleRightDrawerSelection(MenuItem item) {
         int id = item.getItemId();
-
         if (id == R.id.nav_spam) {
             showToast("Jobs selected");
         } else if (id == R.id.nav_trash) {
             showToast("Trash selected");
         }
-
         drawerLayout.closeDrawer(GravityCompat.END);
         return true;
-    }
-
-    private void handlePresetSelection(String presetName) {
-        showToast("Preset selected: " + presetName);
-        // Implement preset filtering here if needed
     }
 
     private void showToast(String message) {

@@ -15,9 +15,6 @@ import androidx.appcompat.widget.Toolbar;
 import com.example.emailorginizersfe2.R;
 import com.google.android.material.chip.Chip;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,8 +25,6 @@ public class CreatePresetActivity extends AppCompatActivity {
     private LinearLayout layoutPositiveKeywords, layoutNegativeKeywords;
     private final ArrayList<String> positiveKeywords = new ArrayList<>();
     private final ArrayList<String> negativeKeywords = new ArrayList<>();
-
-    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,8 +38,6 @@ public class CreatePresetActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Create Preset");
         }
-
-        sharedPreferences = getSharedPreferences("presets", Context.MODE_PRIVATE);
 
         editPresetTitle = findViewById(R.id.edit_preset_title);
         editPositiveKeyword = findViewById(R.id.edit_positive_keyword);
@@ -65,7 +58,7 @@ public class CreatePresetActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            finish(); // Back button pressed
+            finish();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -88,32 +81,37 @@ public class CreatePresetActivity extends AppCompatActivity {
     }
 
     private void savePreset() {
-        String title = editPresetTitle.getText().toString().trim();
+        String presetName = editPresetTitle.getText().toString().trim();
 
-        if (title.isEmpty()) {
+        if (presetName.isEmpty()) {
             Toast.makeText(this, "Please enter a preset name", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        try {
-            JSONObject presetObject = new JSONObject();
-            presetObject.put("positive", new JSONArray(positiveKeywords));
-            presetObject.put("negative", new JSONArray(negativeKeywords));
-
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putString("preset_" + title, presetObject.toString());
-
-            // Copy set before modifying to avoid runtime exceptions
-            Set<String> names = new HashSet<>(sharedPreferences.getStringSet("preset_names", new HashSet<>()));
-            names.add(title);
-            editor.putStringSet("preset_names", names);
-
-            editor.apply();
-
-            Toast.makeText(this, "Preset '" + title + "' saved!", Toast.LENGTH_SHORT).show();
-            finish();
-        } catch (Exception e) {
-            Toast.makeText(this, "Error saving preset", Toast.LENGTH_SHORT).show();
+        if (positiveKeywords.isEmpty() && negativeKeywords.isEmpty()) {
+            Toast.makeText(this, "Please add at least one keyword", Toast.LENGTH_SHORT).show();
+            return;
         }
+
+        // Convert keyword lists to comma-separated strings
+        String positiveKeywordsStr = String.join(",", positiveKeywords);
+        String negativeKeywordsStr = String.join(",", negativeKeywords);
+
+        SharedPreferences prefs = getSharedPreferences("presets", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        // Add to preset names set
+        Set<String> presetNames = new HashSet<>(prefs.getStringSet("preset_names", new HashSet<>()));
+        presetNames.add(presetName);
+        editor.putStringSet("preset_names", presetNames);
+
+        // Store keywords
+        editor.putString(presetName + "_positive", positiveKeywordsStr);
+        editor.putString(presetName + "_negative", negativeKeywordsStr);
+
+        editor.apply();
+
+        Toast.makeText(this, "Preset saved successfully", Toast.LENGTH_SHORT).show();
+        finish();
     }
 }
