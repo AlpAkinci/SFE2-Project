@@ -7,11 +7,33 @@
         android:title="Inbox"
         android:icon="@android:drawable/ic_menu_agenda" />
 
-    <!-- Spam -->
     <item
-        android:id="@+id/nav_spam"
-        android:title="Jobs"
-        android:icon="@android:drawable/ic_menu_report_image" />
+        android:id="@+id/nav_all_mail"
+        android:title="All Mail"
+        android:icon="@android:drawable/ic_menu_manage"/>
+
+    <item
+        android:id="@+id/nav_starred"
+        android:title="Starred"
+        android:icon="@android:drawable/btn_star_big_off"/>
+
+    <!-- Snoozed -->
+    <item
+        android:id="@+id/nav_snoozed"
+        android:title="Snoozed"
+        android:icon="@android:drawable/ic_popup_reminder"/>
+
+    <!-- Sent -->
+    <item
+        android:id="@+id/nav_sent"
+        android:title="Sent"
+        android:icon="@android:drawable/ic_menu_send"/>
+
+    <!-- Drafts -->
+    <item
+        android:id="@+id/nav_drafts"
+        android:title="Drafts"
+        android:icon="@android:drawable/ic_menu_edit"/>
 
     <!-- Trash -->
     <item

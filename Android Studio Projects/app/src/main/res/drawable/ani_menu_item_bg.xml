@@ -3,7 +3,11 @@
     <item>
         <inset android:insetTop="4dp" android:insetBottom="4dp">
             <shape android:shape="rectangle">
-                <solid android:color="#e8e8ff" />
+                <gradient
+                    android:angle="270"
+                    android:startColor="#5BA5E1"
+                    android:endColor="#B5D5E4"
+                    android:type="linear" />
                 <corners android:radius="12dp" />
             </shape>
         </inset>

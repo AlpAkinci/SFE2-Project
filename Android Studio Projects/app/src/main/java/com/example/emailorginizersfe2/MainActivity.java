@@ -10,6 +10,8 @@ import android.view.MenuItem;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.View;
+import android.view.Window;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -60,6 +62,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (getSupportActionBar() != null){
+            getSupportActionBar().hide();
+        }
         setContentView(R.layout.activity_main);
         mailFetcher = new MailFetcher("vlogs1167@gmail.com", "zsujmctuzmbstbla");
         initializeViews();
@@ -67,19 +72,26 @@ public class MainActivity extends AppCompatActivity {
         setupNavigation();
         setupRecyclerViewWithPagination();
         loadInitialEmails();
+
+        new android.os.Handler().postDelayed(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        debugInfo.setVisibility(View.GONE);
+                    }
+                },
+                12000
+        );
     }
 
     private void initializeViews() {
         drawerLayout = findViewById(R.id.drawer_layout);
         leftNavView = findViewById(R.id.nav_left_view);
-        NavigationView rightNavView = findViewById(R.id.nav_right_view);
-        ImageButton rightDrawerButton = findViewById(R.id.right_drawer_button);
         Toolbar toolbar = findViewById(R.id.toolbar);
         MaterialButton composeButton = findViewById(R.id.compose_button);
         recyclerView = findViewById(R.id.recycler_inbox);
         debugInfo = findViewById(R.id.debug_info);
         composeButton.setOnClickListener(view -> startActivity(new Intent(this, ComposeEmailActivity.class)));
-        rightDrawerButton.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
     }
 
     private void setupRecyclerViewWithPagination() {
@@ -107,14 +119,15 @@ public class MainActivity extends AppCompatActivity {
     private void setupToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.nav_open, R.string.nav_close);
         drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
     }
 
     private void setupNavigation() {
-        NavigationView rightNavView = findViewById(R.id.nav_right_view);
-        rightNavView.setNavigationItemSelectedListener(this::handleRightDrawerSelection);
         leftNavView.setNavigationItemSelectedListener(this::handleLeftDrawerSelection);
     }
 
@@ -267,17 +280,6 @@ public class MainActivity extends AppCompatActivity {
             handlePresetSelection(item.getTitle().toString());
         }
         drawerLayout.closeDrawer(GravityCompat.START);
-        return true;
-    }
-
-    private boolean handleRightDrawerSelection(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.nav_spam) {
-            showToast("Jobs selected");
-        } else if (id == R.id.nav_trash) {
-            showToast("Trash selected");
-        }
-        drawerLayout.closeDrawer(GravityCompat.END);
         return true;
     }
 

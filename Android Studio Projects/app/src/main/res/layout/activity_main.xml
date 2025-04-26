@@ -17,59 +17,58 @@
             android:background="@drawable/background_gradient"
             android:orientation="vertical">
 
-            <!-- Toolbar -->
-            <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="53dp"
-                android:layout_height="?attr/actionBarSize"
-                android:background="@android:color/transparent"
-                app:navigationIcon="@android:drawable/ic_menu_sort_by_size"
-                app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
-
-            <!-- Search bar -->
-            <EditText
-                android:id="@+id/search_bar"
+            <!-- FrameLayout that holds both Toolbar and SearchBar -->
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:layout_margin="12dp"
-                android:background="@drawable/search_bar_background"
-                android:hint="Good Afternoon, Alp..."
-                android:imeOptions="actionSearch"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:singleLine="true"
-                android:textSize="16sp" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
 
+                <!-- Search bar (background layer) -->
+                <EditText
+                    android:id="@+id/search_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_margin="6dp"
+                    android:background="@drawable/search_bar_background"
+                    android:hint="Good Afternoon, Alp..."
+                    android:imeOptions="actionSearch"
+                    android:paddingStart="42dp"
+                    android:paddingEnd="16dp"
+                    android:singleLine="true"
+                    android:textSize="16sp" />
+
+                <!-- Toolbar (floating on top) -->
+                <androidx.appcompat.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:background="@android:color/transparent"
+                    app:navigationIcon="@android:drawable/ic_menu_sort_by_size"
+                    app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+                    android:layout_gravity="start|center_vertical" />
+            </FrameLayout>
+
+            <!-- Debug Info -->
             <TextView
                 android:id="@+id/debug_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_gravity="center"
+                android:padding="5dp"
                 android:text="Loading emails..."
-                android:textSize="16sp"
-                android:padding="16dp"/>
+                android:textSize="16sp" />
 
-            <!-- Replace placeholder with RecyclerView -->
+            <!-- RecyclerView for emails -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_inbox"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="2dp"
                 android:clipToPadding="false"
                 android:paddingBottom="80dp"
-                android:scrollbars="vertical"/>
-
+                android:scrollbars="vertical" />
         </LinearLayout>
-
-        <!-- Right Drawer Button -->
-        <ImageButton
-            android:id="@+id/right_drawer_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|end"
-            android:layout_margin="16dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_media_rew"
-            android:contentDescription="Open Inbox Drawer" />
 
         <!-- Compose Button -->
         <com.google.android.material.button.MaterialButton
@@ -101,17 +100,4 @@
         app:itemBackground="@drawable/ani_menu_item_bg"
         app:itemRippleColor="@drawable/ripple_overlay"
         app:itemTextAppearance="@style/AniNavigationMenuItemStyle" />
-
-    <!-- Right Drawer -->
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/nav_right_view"
-        android:layout_width="250dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="end"
-        android:background="@android:color/transparent"
-        app:menu="@menu/right_menu"
-        app:headerLayout="@layout/nav_header_main"
-        app:itemBackground="@drawable/ani_menu_item_bg"
-        app:itemTextAppearance="@style/AniNavigationMenuItemStyle" />
-
 </androidx.drawerlayout.widget.DrawerLayout>
