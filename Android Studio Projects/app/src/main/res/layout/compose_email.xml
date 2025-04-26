@@ -69,7 +69,87 @@
         android:backgroundTint="@android:color/darker_gray"
         android:layout_marginTop="4dp" />
 
-    <!-- ATTACHMENT file name preview -->
+    <!-- Preset Preview Box -->
+    <TextView
+        android:id="@+id/text_preset_preview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:textColor="@android:color/black"
+        android:background="@android:color/darker_gray"
+        android:visibility="gone"
+        android:textStyle="italic" />
+
+    <!-- Preset buttons in horizontal scroll -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/preset_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:layout_gravity="center_horizontal"/>
+    </HorizontalScrollView>
+
+    <!-- Buttons below presets -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingTop="4dp"
+        android:layout_marginBottom="8dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_save_custom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save"
+            android:layout_margin="4dp"
+            app:cornerRadius="16dp"
+            app:backgroundTint="@android:color/holo_blue_dark"
+            android:textColor="@android:color/white" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_delete_custom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Delete"
+            android:layout_margin="4dp"
+            app:cornerRadius="16dp"
+            app:backgroundTint="@android:color/holo_red_dark"
+            android:textColor="@android:color/white" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_undo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Undo"
+            android:icon="@android:drawable/ic_menu_revert"
+            app:iconTint="@android:color/white"
+            app:backgroundTint="@android:color/holo_orange_light"
+            app:cornerRadius="16dp"
+            android:layout_marginEnd="4dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_redo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Redo"
+            android:layout_margin="4dp"
+            app:cornerRadius="16dp"
+            app:backgroundTint="@android:color/holo_purple"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+    <!-- Attachment preview -->
     <TextView
         android:id="@+id/text_attachment"
         android:layout_width="match_parent"
@@ -82,7 +162,7 @@
         android:paddingBottom="4dp"
         android:visibility="gone" />
 
-    <!-- Optional: Attach File Button (in addition to top icon) -->
+    <!-- Attach File Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button_attach_file"
         android:layout_width="match_parent"
@@ -95,5 +175,4 @@
         app:backgroundTint="@android:color/holo_green_dark"
         android:textColor="@android:color/white"
         android:layout_margin="16dp" />
-
 </LinearLayout>
