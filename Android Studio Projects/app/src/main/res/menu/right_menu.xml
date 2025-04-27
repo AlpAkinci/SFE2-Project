@@ -1,60 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <!-- Keyword Organizer -->
+    <!-- Static Items -->
     <item
-        android:id="@+id/nav_keywords"
-        android:title="Preset Organizer"
-        android:icon="@android:drawable/ic_menu_compass"/>
-
-    <!-- Starred -->
+        android:id="@+id/nav_create_label"
+        android:title="Create New Preset"
+        android:icon="@android:drawable/ic_menu_add" />
     <item
-        android:id="@+id/nav_starred"
-        android:title="Starred"
-        android:icon="@android:drawable/btn_star_big_off"/>
+        android:id="@+id/nav_manage_labels"
+        android:title="Manage Presets"
+        android:icon="@android:drawable/ic_menu_preferences" />
 
-    <!-- Favorites -->
-    <item
-        android:id="@+id/nav_favorites"
-        android:title="Favorites"
-        android:icon="@android:drawable/star_on"/>
-
-    <!-- Snoozed -->
-    <item
-        android:id="@+id/nav_snoozed"
-        android:title="Snoozed"
-        android:icon="@android:drawable/ic_popup_reminder"/>
-
-    <!-- Sent -->
-    <item
-        android:id="@+id/nav_sent"
-        android:title="Sent"
-        android:icon="@android:drawable/ic_menu_send"/>
-
-    <!-- Drafts -->
-    <item
-        android:id="@+id/nav_drafts"
-        android:title="Drafts"
-        android:icon="@android:drawable/ic_menu_edit"/>
-
-    <!-- Expandable "More" Section -->
-    <group android:id="@+id/nav_more_group">
-        <item
-            android:id="@+id/nav_less"
-            android:title="Less"
-            android:icon="@android:drawable/ic_menu_close_clear_cancel"/>
-        <item
-            android:id="@+id/nav_important"
-            android:title="Important"
-            android:icon="@android:drawable/ic_menu_info_details"/>
-        <item
-            android:id="@+id/nav_scheduled"
-            android:title="Scheduled"
-            android:icon="@android:drawable/ic_menu_today"/>
-        <item
-            android:id="@+id/nav_all_mail"
-            android:title="All Mail"
-            android:icon="@android:drawable/ic_menu_manage"/>
-    </group>
+    <!-- Dynamic Presets Group -->
+    <group android:id="@+id/dynamic_presets_group" />
 
 </menu>

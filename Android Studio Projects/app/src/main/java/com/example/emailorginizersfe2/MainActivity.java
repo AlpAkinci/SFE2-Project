@@ -44,6 +44,7 @@ import com.example.emailorginizersfe2.ui.slideshow.MailFetcher;
 public class MainActivity extends AppCompatActivity {
     private DrawerLayout drawerLayout;
     private NavigationView leftNavView;
+    private NavigationView rightNavView;
     private static final int PRESET_MENU_GROUP_ID = R.id.dynamic_presets_group;
     private RecyclerView recyclerView;
     private InboxAdapter adapter;
@@ -87,11 +88,14 @@ public class MainActivity extends AppCompatActivity {
     private void initializeViews() {
         drawerLayout = findViewById(R.id.drawer_layout);
         leftNavView = findViewById(R.id.nav_left_view);
+        rightNavView = findViewById(R.id.nav_right_view);
+        ImageButton rightDrawerButton = findViewById(R.id.right_drawer_button);
         Toolbar toolbar = findViewById(R.id.toolbar);
         MaterialButton composeButton = findViewById(R.id.compose_button);
         recyclerView = findViewById(R.id.recycler_inbox);
         debugInfo = findViewById(R.id.debug_info);
         composeButton.setOnClickListener(view -> startActivity(new Intent(this, ComposeEmailActivity.class)));
+        rightDrawerButton.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
     }
 
     private void setupRecyclerViewWithPagination() {
@@ -128,6 +132,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupNavigation() {
+        NavigationView rightNavView = findViewById(R.id.nav_right_view);
+        rightNavView.setNavigationItemSelectedListener(this::handleRightDrawerSelection);
         leftNavView.setNavigationItemSelectedListener(this::handleLeftDrawerSelection);
     }
 
@@ -256,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addSavedPresetsToDrawer() {
-        Menu menu = leftNavView.getMenu();
+        Menu menu = rightNavView.getMenu();
         menu.removeGroup(PRESET_MENU_GROUP_ID);
         SharedPreferences prefs = getSharedPreferences("presets", Context.MODE_PRIVATE);
         Set<String> presetSet = prefs.getStringSet("preset_names", new HashSet<>());
@@ -272,14 +278,22 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.nav_inbox) {
             clearFilters();
             Toast.makeText(this, "Showing all emails", Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_manage_labels) {
+        } else if (id == R.id.nav_trash) {
+            showToast("Trash selected");
+        }
+        drawerLayout.closeDrawer(GravityCompat.START);
+        return true;
+    }
+    private boolean handleRightDrawerSelection(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.nav_manage_labels) {
             startActivity(new Intent(this, ManagePresetsActivity.class));
         } else if (id == R.id.nav_create_label) {
             startActivity(new Intent(this, CreatePresetActivity.class));
         } else if (item.getGroupId() == PRESET_MENU_GROUP_ID) {
             handlePresetSelection(item.getTitle().toString());
         }
-        drawerLayout.closeDrawer(GravityCompat.START);
+        drawerLayout.closeDrawer(GravityCompat.END);
         return true;
     }
 
