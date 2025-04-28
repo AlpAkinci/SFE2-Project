@@ -2,7 +2,9 @@ package com.example.emailorginizersfe2.ui.slideshow;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log; // Added this import
+import android.util.Log;
+import android.view.View;  // Added missing import
+import android.webkit.WebView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,17 +13,21 @@ import com.example.emailorginizersfe2.cache.EmailCache;
 import com.example.emailorginizersfe2.cache.Email;
 
 public class EmailDetailActivity extends AppCompatActivity {
-    private EmailCache emailCache;
-    private static final int MAX_EMAIL_SIZE_BYTES = 500000; // 500KB limit for email content
+    private WebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_email_detail);
 
+        // Initialize WebView for HTML content
+        webView = findViewById(R.id.webView);
+        webView.getSettings().setJavaScriptEnabled(false); // Disable JS for security
+        webView.getSettings().setDefaultTextEncodingName("utf-8");
+
         // Initialize cache
         SharedPreferences prefs = getSharedPreferences("EmailCachePrefs", MODE_PRIVATE);
-        EmailCache emailCache = EmailCache.getInstance(prefs);
+        EmailCache emailCache = EmailCache.getInstance(prefs);  // Made local variable
 
         // Get email ID from intent
         String emailId = getIntent().getStringExtra("EMAIL_ID");
@@ -51,11 +57,48 @@ public class EmailDetailActivity extends AppCompatActivity {
 
             ((TextView)findViewById(R.id.sender)).setText(email.getFrom());
             ((TextView)findViewById(R.id.subject)).setText(email.getSubject());
-            ((TextView)findViewById(R.id.content)).setText(email.getContent());
+
+            // Check if content is HTML
+            if (isHtmlContent(email.getContent())) {
+                // Load HTML content in WebView
+                webView.setVisibility(View.VISIBLE);
+                ((TextView)findViewById(R.id.content)).setVisibility(View.GONE);
+
+                // Basic CSS to make content readable
+                String styledHtml = "<html><head><style type=\"text/css\">" +
+                        "body { color: #333333; font-family: sans-serif; line-height: 1.4; } " +
+                        "a { color: #2196F3; } " +
+                        "img { max-width: 100%; height: auto; }" +
+                        "</style></head><body>" +
+                        email.getContent() + "</body></html>";
+
+                webView.loadDataWithBaseURL(
+                        null,
+                        styledHtml,
+                        "text/html",
+                        "UTF-8",
+                        null);
+            } else {
+                // Plain text content
+                webView.setVisibility(View.GONE);
+                TextView contentView = findViewById(R.id.content);
+                contentView.setVisibility(View.VISIBLE);
+                contentView.setText(email.getContent());
+            }
         } catch (Exception e) {
             Log.e("EmailDetail", "Error displaying email", e);
             showErrorAndFinish("Error displaying email");
         }
+    }
+
+    private boolean isHtmlContent(String content) {
+        if (content == null) return false;
+        // Simple check for HTML tags
+        return content.contains("<html") ||
+                content.contains("<div") ||
+                content.contains("<p>") ||
+                content.contains("<br") ||
+                content.contains("<table");
     }
 
     private void showErrorAndFinish(String message) {

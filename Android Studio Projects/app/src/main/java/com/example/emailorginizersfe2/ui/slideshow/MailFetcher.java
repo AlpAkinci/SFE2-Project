@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.mail.BodyPart;
 import javax.mail.FetchProfile;
@@ -27,6 +28,7 @@ public class MailFetcher {
     private final String password;
     private Store store;
     private Folder inbox;
+    private final List<MessageWithScore> cachedMessages = new CopyOnWriteArrayList<>();
 
     public MailFetcher(String username, String password) {
         this.username = username;
@@ -77,7 +79,9 @@ public class MailFetcher {
             List<MessageWithScore> processedMessages = new ArrayList<>();
             for (Message msg : messages) {
                 try {
-                    processedMessages.add(new MessageWithScore(msg, 0, new ArrayList<>()));
+                    MessageWithScore messageWithScore = new MessageWithScore(msg, 0, new ArrayList<>());
+                    processedMessages.add(messageWithScore);
+                    cachedMessages.add(messageWithScore); // Add to cache
                 } catch (Exception e) {
                     Log.w(TAG, "Error processing message", e);
                 }
@@ -88,6 +92,33 @@ public class MailFetcher {
         } finally {
             close();
         }
+    }
+
+    public List<MessageWithScore> searchMessages(String query) {
+        List<MessageWithScore> results = new ArrayList<>();
+        if (query == null || query.isEmpty()) {
+            return new ArrayList<>(cachedMessages);
+        }
+
+        String lowerQuery = query.toLowerCase();
+        for (MessageWithScore message : cachedMessages) {
+            boolean matches = (message.subject != null && message.subject.toLowerCase().contains(lowerQuery)) ||
+                    (message.from != null && message.from.toLowerCase().contains(lowerQuery)) ||
+                    (message.content != null && message.content.toLowerCase().contains(lowerQuery));
+
+            if (matches) {
+                results.add(message);
+            }
+        }
+        return results;
+    }
+
+    public List<MessageWithScore> getAllCachedMessages() {
+        return new ArrayList<>(cachedMessages);
+    }
+
+    public void clearCache() {
+        cachedMessages.clear();
     }
 
     private Message[] filterAndSortMessages(List<MessageWithScore> processedMessages,

@@ -11,6 +11,12 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
+import android.widget.EditText;
+import android.view.inputmethod.EditorInfo;
+import android.text.TextWatcher;
+import android.text.Editable;
+import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -85,10 +91,51 @@ public class MainActivity extends AppCompatActivity {
         setupRecyclerViewWithPagination();
         loadInitialEmails();
 
+        setupSearchBar();
+
         new android.os.Handler().postDelayed(
                 () -> debugInfo.setVisibility(View.GONE),
                 12000
         );
+    }
+
+    private void setupSearchBar() {
+        EditText searchBar = findViewById(R.id.search_bar);
+        searchBar.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                performSearch(searchBar.getText().toString());
+                return true;
+            }
+            return false;
+        });
+
+        // Optional: Add real-time search as user types
+        searchBar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                performSearch(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+    }
+
+    private void performSearch(String query) {
+        if (query.isEmpty()) {
+            // Show all emails when search is empty
+            List<MailFetcher.MessageWithScore> allMessages = mailFetcher.getAllCachedMessages();
+            List<MailFetcher.MessageWithScore> displayMessages = convertMessageWithScoresToDisplay(allMessages);
+            adapter.setEmails(displayMessages);
+            return;
+        }
+
+        List<MailFetcher.MessageWithScore> searchResults = mailFetcher.searchMessages(query);
+        List<MailFetcher.MessageWithScore> displayMessages = convertMessageWithScoresToDisplay(searchResults);
+        adapter.setEmails(displayMessages);
     }
 
     private void initializeViews() {
@@ -150,9 +197,10 @@ public class MainActivity extends AppCompatActivity {
         debugInfo.setText(getString(isFilteringActive ? R.string.loading_filtered_emails : R.string.loading_initial_emails));
 
         // First try to load from cache if not refreshing
-        if (!forceRefresh && !isRefreshing && emailCache.getSortedList(currentCacheKey) != null) {
-            List<Email> cachedEmails = emailCache.getSortedList(currentCacheKey);
-            adapter.setEmails(convertCachedEmails(cachedEmails));
+        if (!forceRefresh && !isRefreshing && !mailFetcher.getAllCachedMessages().isEmpty()) {
+            List<MailFetcher.MessageWithScore> cachedEmails = mailFetcher.getAllCachedMessages();
+            List<MailFetcher.MessageWithScore> displayMessages = convertMessageWithScoresToDisplay(cachedEmails);
+            adapter.setEmails(displayMessages);
             isLoading = false;
             adapter.setLoading(false);
             return;
@@ -209,6 +257,58 @@ public class MainActivity extends AppCompatActivity {
                 int score = calculateEmailScore(subject, content, currentPositiveKeywords);
                 List<String> matchedKeywords = findMatchedKeywords(subject, content, currentPositiveKeywords);
                 result.add(new MailFetcher.MessageWithScore(msg, score, matchedKeywords));
+
+            } catch (Exception e) {
+                Log.e("INBOX", "Error processing message", e);
+            }
+        }
+
+        if (isFilteringActive) {
+            Collections.sort(result, (m1, m2) -> Integer.compare(m2.score, m1.score));
+        }
+
+        return result;
+    }
+
+    // Add this new method to handle MessageWithScore directly
+    private List<MailFetcher.MessageWithScore> convertMessageWithScoresToDisplay(List<MailFetcher.MessageWithScore> messages) {
+        if (!isFilteringActive && currentNegativeKeywords.isEmpty()) {
+            return messages; // Return as-is if no filtering needed
+        }
+
+        List<MailFetcher.MessageWithScore> result = new ArrayList<>();
+
+        for (MailFetcher.MessageWithScore msg : messages) {
+            try {
+                String subject = msg.subject != null ? msg.subject : "";
+                String content = msg.content != null ? msg.content : "";
+
+                if (isFilteringActive && !matchesKeywords(subject, content, currentPositiveKeywords)) {
+                    continue;
+                }
+
+                if (matchesKeywords(subject, content, currentNegativeKeywords)) {
+                    continue;
+                }
+
+                // For already scored messages, we might want to preserve their original score
+                // or recalculate if needed
+                int score = msg.score;
+                List<String> matchedKeywords = msg.matchedKeywords;
+
+                if (isFilteringActive) {
+                    score = calculateEmailScore(subject, content, currentPositiveKeywords);
+                    matchedKeywords = findMatchedKeywords(subject, content, currentPositiveKeywords);
+                }
+
+                result.add(new MailFetcher.MessageWithScore(
+                        msg.id,
+                        msg.from,
+                        subject,
+                        content,
+                        score,
+                        matchedKeywords
+                ));
 
             } catch (Exception e) {
                 Log.e("INBOX", "Error processing message", e);

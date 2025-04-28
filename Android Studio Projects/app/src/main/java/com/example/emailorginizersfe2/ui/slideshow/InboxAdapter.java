@@ -19,7 +19,6 @@ import com.example.emailorginizersfe2.cache.EmailCache;
 import com.example.emailorginizersfe2.cache.Email;
 import java.util.ArrayList;
 import java.util.List;
-import android.util.Log;
 
 public class InboxAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int TYPE_EMAIL = 0;
@@ -112,6 +111,24 @@ public class InboxAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         return spannable;
     }
 
+    private SpannableString highlightSearchTerm(String text, String query) {
+        SpannableString spannable = new SpannableString(text != null ? text : "");
+        if (query == null || query.isEmpty()) return spannable;
+
+        String lowerText = text.toLowerCase();
+        String lowerQuery = query.toLowerCase();
+
+        int index = lowerText.indexOf(lowerQuery);
+        while (index >= 0) {
+            spannable.setSpan(new BackgroundColorSpan(Color.YELLOW),
+                    index,
+                    index + query.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            index = lowerText.indexOf(lowerQuery, index + query.length());
+        }
+        return spannable;
+    }
+
     @Override
     public int getItemCount() {
         return emails.size() + (isLoading ? 1 : 0);
@@ -149,14 +166,21 @@ public class InboxAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             // Set sender text
             senderView.setText(email.from != null ? email.from : "Unknown");
 
-            // Highlight keywords in subject and preview
+            // Highlight keywords in subject
             subjectView.setText(highlightKeywords(
                     email.subject != null ? email.subject : "No Subject",
                     keywords,
                     Color.YELLOW));
 
+            // Process content: Remove HTML tags, decode entities, and compact whitespace
             String content = email.content != null ? email.content : "";
-            String preview = content.length() > 100 ? content.substring(0, 100) + "..." : content;
+            String plainTextContent = compactText(content);
+
+            // Generate preview (first 100 chars, trimmed)
+            String preview = plainTextContent.length() > 100 ?
+                    plainTextContent.substring(0, 100).trim() + "..." :
+                    plainTextContent;
+
             previewView.setText(highlightKeywords(preview, keywords, Color.CYAN));
 
             itemView.setOnClickListener(v -> {
@@ -164,6 +188,27 @@ public class InboxAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 intent.putExtra("EMAIL_ID", email.id);
                 itemView.getContext().startActivity(intent);
             });
+        }
+
+        // Helper method to clean HTML and compact whitespace
+        private String compactText(String htmlText) {
+            if (htmlText == null) return "";
+
+            // Step 1: Remove all HTML tags
+            String noHtml = htmlText.replaceAll("<[^>]*>", "");
+
+            // Step 2: Replace common HTML entities (e.g., &nbsp;) with a space
+            String decodedText = noHtml
+                    .replaceAll("&nbsp;", " ")
+                    .replaceAll("&amp;", "&")
+                    .replaceAll("&lt;", "<")
+                    .replaceAll("&gt;", ">");
+
+            // Step 3: Collapse all whitespace (spaces, newlines, tabs) into a single space
+            String compactText = decodedText.replaceAll("\\s+", " ");
+
+            // Step 4: Trim leading/trailing spaces
+            return compactText.trim();
         }
     }
 
