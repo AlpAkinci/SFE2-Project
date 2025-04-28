@@ -25,6 +25,8 @@ public class CreatePresetActivity extends AppCompatActivity {
     private LinearLayout layoutPositiveKeywords, layoutNegativeKeywords;
     private final ArrayList<String> positiveKeywords = new ArrayList<>();
     private final ArrayList<String> negativeKeywords = new ArrayList<>();
+    private boolean isEditMode = false;
+    private String originalPresetName = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +38,6 @@ public class CreatePresetActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Create Preset");
         }
 
         editPresetTitle = findViewById(R.id.edit_preset_title);
@@ -53,7 +54,48 @@ public class CreatePresetActivity extends AppCompatActivity {
         buttonAddNegative.setOnClickListener(v -> addKeyword(editNegativeKeyword, layoutNegativeKeywords, negativeKeywords));
 
         buttonSave.setOnClickListener(v -> savePreset());
+
+        // Check if we're in edit mode
+        if (getIntent().hasExtra("EDIT_PRESET")) {
+            originalPresetName = getIntent().getStringExtra("EDIT_PRESET");
+            isEditMode = true;
+            getSupportActionBar().setTitle("Edit Preset");
+            editPresetTitle.setText(originalPresetName);
+            loadPresetData(originalPresetName);
+        } else {
+            getSupportActionBar().setTitle("Create Preset");
+        }
     }
+
+    private void loadPresetData(String presetName) {
+        SharedPreferences prefs = getSharedPreferences("presets", Context.MODE_PRIVATE);
+
+        // Load positive keywords
+        String positiveStr = prefs.getString(presetName + "_positive", "");
+        if (!positiveStr.isEmpty()) {
+            String[] positives = positiveStr.split(",");
+            for (String keyword : positives) {
+                if (!keyword.trim().isEmpty()) {
+                    positiveKeywords.add(keyword.trim());
+                    addKeywordToLayout(keyword.trim(), layoutPositiveKeywords, positiveKeywords);
+                }
+            }
+        }
+
+        // Load negative keywords
+        String negativeStr = prefs.getString(presetName + "_negative", "");
+        if (!negativeStr.isEmpty()) {
+            String[] negatives = negativeStr.split(",");
+            for (String keyword : negatives) {
+                if (!keyword.trim().isEmpty()) {
+                    negativeKeywords.add(keyword.trim());
+                    addKeywordToLayout(keyword.trim(), layoutNegativeKeywords, negativeKeywords);
+                }
+            }
+        }
+    }
+
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -80,6 +122,17 @@ public class CreatePresetActivity extends AppCompatActivity {
         }
     }
 
+    private void addKeywordToLayout(String keyword, LinearLayout layout, ArrayList<String> list) {
+        Chip chip = new Chip(this);
+        chip.setText(keyword);
+        chip.setCloseIconVisible(true);
+        chip.setOnCloseIconClickListener(view -> {
+            layout.removeView(chip);
+            list.remove(keyword);
+        });
+        layout.addView(chip);
+    }
+
     private void savePreset() {
         String presetName = editPresetTitle.getText().toString().trim();
 
@@ -100,10 +153,24 @@ public class CreatePresetActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("presets", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 
-        // Add to preset names set
-        Set<String> presetNames = new HashSet<>(prefs.getStringSet("preset_names", new HashSet<>()));
-        presetNames.add(presetName);
-        editor.putStringSet("preset_names", presetNames);
+        // Handle name change in edit mode
+        if (isEditMode && !originalPresetName.equals(presetName)) {
+            // Remove old preset data
+            Set<String> presetNames = new HashSet<>(prefs.getStringSet("preset_names", new HashSet<>()));
+            presetNames.remove(originalPresetName);
+            editor.remove(originalPresetName + "_positive");
+            editor.remove(originalPresetName + "_negative");
+
+            // Add new name
+            presetNames.add(presetName);
+            editor.putStringSet("preset_names", presetNames);
+        }
+        else if (!isEditMode) {
+            // Add to preset names set if new preset
+            Set<String> presetNames = new HashSet<>(prefs.getStringSet("preset_names", new HashSet<>()));
+            presetNames.add(presetName);
+            editor.putStringSet("preset_names", presetNames);
+        }
 
         // Store keywords
         editor.putString(presetName + "_positive", positiveKeywordsStr);
@@ -111,7 +178,7 @@ public class CreatePresetActivity extends AppCompatActivity {
 
         editor.apply();
 
-        Toast.makeText(this, "Preset saved successfully", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Preset " + (isEditMode ? "updated" : "saved") + " successfully", Toast.LENGTH_SHORT).show();
         finish();
     }
 }

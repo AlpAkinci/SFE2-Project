@@ -35,6 +35,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Email Detail Activity (added missing theme) -->
+        <activity
+            android:name=".ui.slideshow.EmailDetailActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme.EmailOrginizerSFE2.NoActionBar" />
+
         <!-- Compose Email -->
         <activity
             android:name=".ui.ComposeEmailActivity"

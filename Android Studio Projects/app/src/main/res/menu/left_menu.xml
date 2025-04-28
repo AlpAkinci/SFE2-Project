@@ -19,8 +19,8 @@
 
     <!-- Snoozed -->
     <item
-        android:id="@+id/nav_snoozed"
-        android:title="Snoozed"
+        android:id="@+id/nav_spam"
+        android:title="Spam"
         android:icon="@android:drawable/ic_popup_reminder"/>
 
     <!-- Sent -->

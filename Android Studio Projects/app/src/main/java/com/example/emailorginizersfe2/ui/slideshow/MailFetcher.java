@@ -2,18 +2,24 @@ package com.example.emailorginizersfe2.ui.slideshow;
 
 import android.util.Log;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
 import javax.mail.BodyPart;
 import javax.mail.FetchProfile;
 import javax.mail.Folder;
 import javax.mail.Message;
+import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.Store;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 public class MailFetcher {
     private static final String TAG = "MailFetcher";
@@ -27,13 +33,13 @@ public class MailFetcher {
         this.password = password;
     }
 
-    public Message[] fetchInboxEmails(int offset, int limit) throws Exception {
+    public Message[] fetchInboxEmails(int offset, int limit) throws MessagingException {
         return fetchFilteredEmails(offset, limit, Collections.emptyList(), Collections.emptyList());
     }
 
     public Message[] fetchFilteredEmails(int offset, int limit,
                                          List<String> positiveKeywords,
-                                         List<String> negativeKeywords) throws Exception {
+                                         List<String> negativeKeywords) throws MessagingException {
         Properties props = new Properties();
         props.put("mail.store.protocol", "imaps");
         props.put("mail.imaps.host", "imap.gmail.com");
@@ -53,85 +59,199 @@ public class MailFetcher {
             Log.d(TAG, "Total messages in inbox: " + totalMessages);
 
             int start = Math.max(1, totalMessages - offset - limit + 1);
-            int end = totalMessages - offset;
+            int end = Math.min(totalMessages, totalMessages - offset);
 
-            if (end < 1) return new Message[0];
+            if (start > end) return new Message[0];
 
             Log.d(TAG, "Fetching messages from " + start + " to " + end);
             Message[] messages = inbox.getMessages(start, end);
 
+            // Pre-fetch all content while the folder is open
             FetchProfile fp = new FetchProfile();
             fp.add(FetchProfile.Item.CONTENT_INFO);
             fp.add(FetchProfile.Item.ENVELOPE);
+            fp.add(FetchProfile.Item.FLAGS);
             inbox.fetch(messages, fp);
 
-            return filterAndSortMessages(messages, positiveKeywords, negativeKeywords);
-        } catch (Exception e) {
-            Log.e(TAG, "Error fetching emails", e);
+            // Process messages while connection is still open
+            List<MessageWithScore> processedMessages = new ArrayList<>();
+            for (Message msg : messages) {
+                try {
+                    processedMessages.add(new MessageWithScore(msg, 0, new ArrayList<>()));
+                } catch (Exception e) {
+                    Log.w(TAG, "Error processing message", e);
+                }
+            }
+
+            // Now filter and sort using the pre-processed data
+            return filterAndSortMessages(processedMessages, positiveKeywords, negativeKeywords);
+        } finally {
             close();
-            throw e;
         }
     }
 
-    private Message[] filterAndSortMessages(Message[] messages,
+    private Message[] filterAndSortMessages(List<MessageWithScore> processedMessages,
                                             List<String> positiveKeywords,
                                             List<String> negativeKeywords) {
         List<Message> filteredMessages = new ArrayList<>();
         List<MessageWithScore> scoredMessages = new ArrayList<>();
 
-        for (Message msg : messages) {
+        for (MessageWithScore email : processedMessages) {
             try {
-                String subject = msg.getSubject() != null ? msg.getSubject() : "";
-                String content = getMessageContent(msg);
+                String subject = email.subject;
+                String content = email.content;
 
-                boolean hasNegativeKeyword = false;
-                if (negativeKeywords != null) {
-                    for (String keyword : negativeKeywords) {
-                        if (keyword != null &&
-                                (subject.toLowerCase().contains(keyword.toLowerCase()) ||
-                                        content.toLowerCase().contains(keyword.toLowerCase()))) {
-                            hasNegativeKeyword = true;
-                            break;
-                        }
-                    }
+                // Negative keyword filtering
+                boolean shouldExclude = false;
+                if (negativeKeywords != null && !negativeKeywords.isEmpty()) {
+                    shouldExclude = negativeKeywords.stream()
+                            .filter(Objects::nonNull)
+                            .anyMatch(keyword -> {
+                                if (keyword == null || keyword.isEmpty()) return false;
+                                String lowerKeyword = keyword.toLowerCase().trim();
+                                return subject.toLowerCase().contains(lowerKeyword) ||
+                                        content.toLowerCase().contains(lowerKeyword);
+                            });
                 }
 
-                if (!hasNegativeKeyword) {
-                    if (positiveKeywords != null && !positiveKeywords.isEmpty()) {
-                        int score = 0;
-                        for (String keyword : positiveKeywords) {
-                            if (keyword != null) {
-                                score += countMatches(subject, keyword) * 3;
-                                score += countMatches(content, keyword);
+                if (shouldExclude) {
+                    Log.d(TAG, "Excluded message with subject: " + subject);
+                    continue;
+                }
+
+                // Positive keyword scoring
+                int score = 0;
+                List<String> matchedKeywords = new ArrayList<>();
+                if (positiveKeywords != null && !positiveKeywords.isEmpty()) {
+                    for (String keyword : positiveKeywords) {
+                        if (keyword != null && !keyword.isEmpty()) {
+                            String lowerKeyword = keyword.toLowerCase().trim();
+                            int subjectMatches = countOccurrences(subject.toLowerCase(), lowerKeyword);
+                            int contentMatches = countOccurrences(content.toLowerCase(), lowerKeyword);
+
+                            if (subjectMatches > 0 || contentMatches > 0) {
+                                matchedKeywords.add(keyword);
                             }
-                        }
 
-                        if (score > 0) {
-                            scoredMessages.add(new MessageWithScore(msg, score));
-                        } else {
-                            filteredMessages.add(msg);
+                            score += 3 * subjectMatches;
+                            score += contentMatches;
                         }
-                    } else {
-                        filteredMessages.add(msg);
+                    }
+
+                    if (score > 0) {
+                        scoredMessages.add(new MessageWithScore(
+                                email.id,
+                                email.from,
+                                subject,
+                                content,
+                                score,
+                                matchedKeywords
+                        ));
+                        continue;
                     }
                 }
+
+                filteredMessages.add(createMessageFromData(email.from, subject, content));
             } catch (Exception e) {
-                Log.w(TAG, "Error processing message", e);
+                Log.w(TAG, "Error filtering message", e);
             }
         }
 
+        // Sort by score (highest first)
         scoredMessages.sort((m1, m2) -> Integer.compare(m2.score, m1.score));
 
+        // Combine results
         List<Message> result = new ArrayList<>();
-        for (MessageWithScore mws : scoredMessages) {
-            result.add(mws.message);
+        for (MessageWithScore scored : scoredMessages) {
+            try {
+                result.add(createMessageFromData(scored.from, scored.subject, scored.content));
+            } catch (MessagingException e) {
+                Log.w(TAG, "Error recreating message", e);
+            }
         }
         result.addAll(filteredMessages);
 
         return result.toArray(new Message[0]);
     }
 
-    private String getMessageContent(Message message) {
+    private Message createMessageFromData(String from, String subject, String content) throws MessagingException {
+        MimeMessage message = new MimeMessage((Session) null);
+        message.setFrom(new InternetAddress(from));
+        message.setSubject(subject);
+        message.setText(content);
+        return message;
+    }
+
+    private int countOccurrences(String text, String substring) {
+        int count = 0;
+        int idx = 0;
+        while ((idx = text.indexOf(substring, idx)) != -1) {
+            count++;
+            idx += substring.length();
+        }
+        return count;
+    }
+
+    public static class MessageWithScore implements Serializable {
+        public String id;
+        public String from;
+        public String subject;
+        public String content;
+        public int score;
+        public List<String> matchedKeywords;
+
+        public MessageWithScore(Message message, int score, List<String> matchedKeywords) {
+            try {
+                this.from = getFromAddress(message);
+                this.subject = message.getSubject() != null ? message.getSubject() : "";
+                this.content = getMessageContent(message);
+                this.score = score;
+                this.matchedKeywords = matchedKeywords != null ? matchedKeywords : new ArrayList<>();
+
+                // Generate ID if not available
+                try {
+                    String[] messageId = message.getHeader("Message-ID");
+                    this.id = (messageId != null && messageId.length > 0) ? messageId[0]
+                            : "gen_" + Math.abs((from + subject + content).hashCode());
+                } catch (Exception e) {
+                    this.id = "gen_" + System.currentTimeMillis();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error creating MessageWithScore", e);
+                // Initialize with default values
+                this.from = "";
+                this.subject = "";
+                this.content = "";
+                this.score = 0;
+                this.matchedKeywords = new ArrayList<>();
+                this.id = "gen_" + System.currentTimeMillis();
+            }
+        }
+
+        public MessageWithScore(String id, String from, String subject, String content,
+                                int score, List<String> matchedKeywords) {
+            this.id = id;
+            this.from = from != null ? from : "";
+            this.subject = subject != null ? subject : "";
+            this.content = content != null ? content : "";
+            this.score = score;
+            this.matchedKeywords = matchedKeywords != null ? matchedKeywords : new ArrayList<>();
+        }
+    }
+
+    private static String getFromAddress(Message message) {
+        try {
+            InternetAddress[] addresses = (InternetAddress[]) message.getFrom();
+            if (addresses != null && addresses.length > 0) {
+                return addresses[0].getAddress();
+            }
+        } catch (MessagingException e) {
+            Log.e(TAG, "Error getting from address", e);
+        }
+        return "unknown@example.com";
+    }
+
+    private static String getMessageContent(Message message) {
         try {
             Object content = message.getContent();
             if (content instanceof String) {
@@ -141,40 +261,19 @@ public class MailFetcher {
                 Multipart mp = (Multipart) content;
                 for (int i = 0; i < mp.getCount(); i++) {
                     BodyPart bodyPart = mp.getBodyPart(i);
-                    if (bodyPart.getContentType().startsWith("text/plain")) {
-                        sb.append(bodyPart.getContent().toString());
+                    if (bodyPart.getContentType().startsWith("text/")) {
+                        Object partContent = bodyPart.getContent();
+                        if (partContent != null) {
+                            sb.append(partContent.toString()).append("\n\n");
+                        }
                     }
                 }
-                return sb.toString();
+                return sb.toString().trim();
             }
-            return "";
         } catch (Exception e) {
-            Log.w(TAG, "Error getting message content", e);
-            return "";
+            Log.e(TAG, "Error getting message content", e);
         }
-    }
-
-    private int countMatches(String text, String keyword) {
-        if (text == null || keyword == null) return 0;
-        int count = 0;
-        int idx = 0;
-        String lowerText = text.toLowerCase();
-        String lowerKeyword = keyword.toLowerCase();
-        while ((idx = lowerText.indexOf(lowerKeyword, idx)) != -1) {
-            count++;
-            idx += lowerKeyword.length();
-        }
-        return count;
-    }
-
-    private static class MessageWithScore {
-        final Message message;
-        final int score;
-
-        MessageWithScore(Message message, int score) {
-            this.message = message;
-            this.score = score;
-        }
+        return "";
     }
 
     public void close() {
@@ -185,11 +284,8 @@ public class MailFetcher {
             if (store != null && store.isConnected()) {
                 store.close();
             }
-        } catch (Exception e) {
-            Log.w(TAG, "Error closing resources", e);
-        } finally {
-            inbox = null;
-            store = null;
+        } catch (MessagingException e) {
+            Log.e(TAG, "Error closing connection", e);
         }
     }
 

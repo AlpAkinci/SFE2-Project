@@ -11,7 +11,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
-import android.view.Window;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -27,6 +26,7 @@ import com.example.emailorginizersfe2.ui.ComposeEmailActivity;
 import com.example.emailorginizersfe2.ui.CreatePresetActivity;
 import com.example.emailorginizersfe2.ui.ManagePresetsActivity;
 import com.example.emailorginizersfe2.ui.slideshow.InboxAdapter;
+import com.example.emailorginizersfe2.ui.slideshow.MailFetcher;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.navigation.NavigationView;
 
@@ -36,10 +36,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.mail.Multipart;
+import javax.mail.BodyPart;
 
 import javax.mail.Message;
+import com.example.emailorginizersfe2.cache.EmailCache;
+import com.example.emailorginizersfe2.cache.Email;
 import javax.mail.internet.InternetAddress;
-import com.example.emailorginizersfe2.ui.slideshow.MailFetcher;
 
 public class MainActivity extends AppCompatActivity {
     private DrawerLayout drawerLayout;
@@ -48,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
     private static final int PRESET_MENU_GROUP_ID = R.id.dynamic_presets_group;
     private RecyclerView recyclerView;
     private InboxAdapter adapter;
-    private final List<String> emailList = new ArrayList<>();
     private TextView debugInfo;
     private List<String> currentPositiveKeywords = new ArrayList<>();
     private List<String> currentNegativeKeywords = new ArrayList<>();
@@ -59,14 +61,23 @@ public class MainActivity extends AppCompatActivity {
     private static final int INITIAL_LOAD_COUNT = 40;
     private static final int PAGE_SIZE = 10;
     private MailFetcher mailFetcher;
+    private EmailCache emailCache;
+    private final String currentCacheKey = "inbox_default";
+    private boolean isRefreshing = false;
+    private boolean forceRefresh = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getSupportActionBar() != null){
+        if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
         setContentView(R.layout.activity_main);
+
+        // Initialize EmailCache
+        SharedPreferences prefs = getSharedPreferences("EmailCachePrefs", MODE_PRIVATE);
+        emailCache = EmailCache.getInstance(prefs);
+
         mailFetcher = new MailFetcher("vlogs1167@gmail.com", "zsujmctuzmbstbla");
         initializeViews();
         setupToolbar();
@@ -75,12 +86,7 @@ public class MainActivity extends AppCompatActivity {
         loadInitialEmails();
 
         new android.os.Handler().postDelayed(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        debugInfo.setVisibility(View.GONE);
-                    }
-                },
+                () -> debugInfo.setVisibility(View.GONE),
                 12000
         );
     }
@@ -101,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
     private void setupRecyclerViewWithPagination() {
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-        adapter = new InboxAdapter(emailList);
+        adapter = new InboxAdapter(this);  // Pass 'this' as Context
         recyclerView.setAdapter(adapter);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -132,41 +138,51 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupNavigation() {
-        NavigationView rightNavView = findViewById(R.id.nav_right_view);
         rightNavView.setNavigationItemSelectedListener(this::handleRightDrawerSelection);
         leftNavView.setNavigationItemSelectedListener(this::handleLeftDrawerSelection);
     }
 
     private void loadInitialEmails() {
         if (isLoading) return;
+
         isLoading = true;
         adapter.setLoading(true);
-        debugInfo.setText(isFilteringActive ? "Loading filtered emails..." : "Loading initial emails...");
+        debugInfo.setText(getString(isFilteringActive ? R.string.loading_filtered_emails : R.string.loading_initial_emails));
+
+        // First try to load from cache if not refreshing
+        if (!forceRefresh && !isRefreshing && emailCache.getSortedList(currentCacheKey) != null) {
+            List<Email> cachedEmails = emailCache.getSortedList(currentCacheKey);
+            adapter.setEmails(convertCachedEmails(cachedEmails));
+            isLoading = false;
+            adapter.setLoading(false);
+            return;
+        }
+
+        // Reset refresh flag
+        forceRefresh = false;
+
         new Thread(() -> {
             try {
-                Message[] messages = isFilteringActive ?
-                        mailFetcher.fetchFilteredEmails(0, INITIAL_LOAD_COUNT, currentPositiveKeywords, currentNegativeKeywords) :
-                        mailFetcher.fetchInboxEmails(0, INITIAL_LOAD_COUNT);
-                emailList.clear();
-                for (Message msg : messages) {
-                    String from = InternetAddress.toString(msg.getFrom());
-                    String subject = msg.getSubject();
-                    String preview = getMessagePreview(msg);
-                    emailList.add("From: " + from + "\nSubject: " + subject + "\nPreview: " + preview);
-                }
-                currentOffset = emailList.size();
+                Message[] messages = mailFetcher.fetchInboxEmails(0, INITIAL_LOAD_COUNT);
+                List<Message> messageList = Arrays.asList(messages);
+                currentOffset = messageList.size();
                 hasMoreEmails = messages.length == INITIAL_LOAD_COUNT;
+
                 runOnUiThread(() -> {
-                    adapter.notifyDataSetChanged();
-                    debugInfo.setText("Loaded " + emailList.size() + (isFilteringActive ? " filtered" : "") + " emails");
+                    List<MailFetcher.MessageWithScore> displayMessages = convertMessagesToDisplay(messageList);
+                    adapter.setKeywords(currentPositiveKeywords);
+                    adapter.setEmails(displayMessages);
+                    debugInfo.setText(getString(R.string.loaded_emails_count,
+                            adapter.getItemCount() - (isLoading ? 1 : 0),
+                            isFilteringActive ? getString(R.string.filtered) : ""));
                     isLoading = false;
                     adapter.setLoading(false);
                 });
             } catch (Exception e) {
                 Log.e("INBOX", "Error loading emails", e);
                 runOnUiThread(() -> {
-                    Toast.makeText(this, "Error loading emails", Toast.LENGTH_LONG).show();
-                    debugInfo.setText("Failed to load emails");
+                    Toast.makeText(this, R.string.error_loading_emails, Toast.LENGTH_LONG).show();
+                    debugInfo.setText(R.string.failed_to_load_emails);
                     isLoading = false;
                     adapter.setLoading(false);
                 });
@@ -174,34 +190,163 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
+    private List<MailFetcher.MessageWithScore> convertMessagesToDisplay(List<Message> messages) {
+        List<MailFetcher.MessageWithScore> result = new ArrayList<>();
+
+        for (Message msg : messages) {
+            try {
+                String subject = msg.getSubject() != null ? msg.getSubject() : "";
+                String content = getMessageContent(msg);
+
+                if (isFilteringActive && !matchesKeywords(subject, content, currentPositiveKeywords)) {
+                    continue;
+                }
+
+                if (matchesKeywords(subject, content, currentNegativeKeywords)) {
+                    continue;
+                }
+
+                int score = calculateEmailScore(subject, content, currentPositiveKeywords);
+                List<String> matchedKeywords = findMatchedKeywords(subject, content, currentPositiveKeywords);
+                result.add(new MailFetcher.MessageWithScore(msg, score, matchedKeywords));
+
+            } catch (Exception e) {
+                Log.e("INBOX", "Error processing message", e);
+            }
+        }
+
+        if (isFilteringActive) {
+            Collections.sort(result, (m1, m2) -> Integer.compare(m2.score, m1.score));
+        }
+
+        return result;
+    }
+
+    private List<MailFetcher.MessageWithScore> convertCachedEmails(List<Email> cachedEmails) {
+        List<MailFetcher.MessageWithScore> result = new ArrayList<>();
+        for (Email email : cachedEmails) {
+            result.add(new MailFetcher.MessageWithScore(
+                    email.getId(),
+                    email.getFrom(),
+                    email.getSubject(),
+                    email.getContent(),
+                    0, // Default score
+                    email.getMatchedKeywords()
+            ));
+        }
+        return result;
+    }
+
+    private boolean matchesKeywords(String subject, String content, List<String> keywords) {
+        if (keywords == null || keywords.isEmpty()) {
+            return false;
+        }
+
+        String lowerSubject = subject.toLowerCase();
+        String lowerContent = content.toLowerCase();
+
+        for (String keyword : keywords) {
+            if (keyword != null && !keyword.isEmpty()) {
+                String lowerKeyword = keyword.toLowerCase();
+                if (lowerSubject.contains(lowerKeyword) || lowerContent.contains(lowerKeyword)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private int calculateEmailScore(String subject, String content, List<String> keywords) {
+        int score = 0;
+        String lowerSubject = subject.toLowerCase();
+        String lowerContent = content.toLowerCase();
+
+        for (String keyword : keywords) {
+            if (keyword != null && !keyword.isEmpty()) {
+                String lowerKeyword = keyword.toLowerCase();
+                score += 10 * countOccurrences(lowerSubject, lowerKeyword);
+                score += countOccurrences(lowerContent, lowerKeyword);
+            }
+        }
+        return score;
+    }
+
+    private List<String> findMatchedKeywords(String subject, String content, List<String> keywords) {
+        List<String> matched = new ArrayList<>();
+        String lowerSubject = subject.toLowerCase();
+        String lowerContent = content.toLowerCase();
+
+        for (String keyword : keywords) {
+            if (keyword != null && !keyword.isEmpty()) {
+                String lowerKeyword = keyword.toLowerCase();
+                if (lowerSubject.contains(lowerKeyword) || lowerContent.contains(lowerKeyword)) {
+                    matched.add(keyword);
+                }
+            }
+        }
+        return matched;
+    }
+
+    private int countOccurrences(String text, String substring) {
+        int count = 0;
+        int idx = 0;
+        while ((idx = text.indexOf(substring, idx)) != -1) {
+            count++;
+            idx += substring.length();
+        }
+        return count;
+    }
+
+    private String getMessageContent(Message message) {
+        try {
+            Object content = message.getContent();
+            if (content instanceof String) {
+                return (String) content;
+            } else if (content instanceof Multipart) {
+                StringBuilder sb = new StringBuilder();
+                Multipart mp = (Multipart) content;
+                for (int i = 0; i < mp.getCount(); i++) {
+                    BodyPart bodyPart = mp.getBodyPart(i);
+                    if (bodyPart.getContentType().startsWith("text/")) {
+                        Object partContent = bodyPart.getContent();
+                        if (partContent != null) {
+                            sb.append(partContent.toString()).append(" ");
+                        }
+                    }
+                }
+                return sb.toString().trim();
+            }
+        } catch (Exception e) {
+            Log.w("INBOX", "Error getting message content", e);
+        }
+        return "";
+    }
+
     private void loadMoreEmails() {
         if (isLoading || !hasMoreEmails) return;
+
         isLoading = true;
         adapter.setLoading(true);
+
         new Thread(() -> {
             try {
-                Message[] messages = isFilteringActive ?
-                        mailFetcher.fetchFilteredEmails(currentOffset, PAGE_SIZE, currentPositiveKeywords, currentNegativeKeywords) :
-                        mailFetcher.fetchInboxEmails(currentOffset, PAGE_SIZE);
-                int initialSize = emailList.size();
-                for (Message msg : messages) {
-                    String from = InternetAddress.toString(msg.getFrom());
-                    String subject = msg.getSubject();
-                    String preview = getMessagePreview(msg);
-                    emailList.add("From: " + from + "\nSubject: " + subject + "\nPreview: " + preview);
-                }
-                currentOffset += messages.length;
+                Message[] messages = mailFetcher.fetchInboxEmails(currentOffset, PAGE_SIZE);
+                List<Message> newMessages = Arrays.asList(messages);
+                currentOffset += newMessages.size();
                 hasMoreEmails = messages.length == PAGE_SIZE;
+
                 runOnUiThread(() -> {
-                    adapter.notifyItemRangeInserted(initialSize, messages.length);
-                    debugInfo.setText("Loaded " + emailList.size() + (isFilteringActive ? " filtered" : "") + " emails (total)");
+                    adapter.addEmails(convertMessagesToDisplay(newMessages));
+                    debugInfo.setText(getString(R.string.loaded_total_emails,
+                            adapter.getItemCount() - (isLoading ? 1 : 0),
+                            isFilteringActive ? getString(R.string.filtered) : ""));
                     isLoading = false;
                     adapter.setLoading(false);
                 });
             } catch (Exception e) {
                 Log.e("INBOX", "Error loading more emails", e);
                 runOnUiThread(() -> {
-                    Toast.makeText(this, "Error loading more emails", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, R.string.error_loading_more_emails, Toast.LENGTH_LONG).show();
                     isLoading = false;
                     adapter.setLoading(false);
                 });
@@ -209,24 +354,11 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
-    private String getMessagePreview(Message message) {
-        try {
-            Object content = message.getContent();
-            if (content instanceof String) {
-                String text = (String) content;
-                return text.length() > 100 ? text.substring(0, 100) + "..." : text;
-            }
-        } catch (Exception e) {
-            Log.e("INBOX", "Error getting message preview", e);
-        }
-        return "";
-    }
-
     private void refreshEmails() {
+        forceRefresh = true;  // Force refresh when explicitly requested
         currentOffset = 0;
         hasMoreEmails = true;
-        emailList.clear();
-        adapter.notifyDataSetChanged();
+        adapter.setEmails(new ArrayList<>());
         loadInitialEmails();
     }
 
@@ -239,14 +371,25 @@ public class MainActivity extends AppCompatActivity {
 
     private void handlePresetSelection(String presetName) {
         SharedPreferences prefs = getSharedPreferences("presets", Context.MODE_PRIVATE);
+
         String positive = prefs.getString(presetName + "_positive", "");
         String negative = prefs.getString(presetName + "_negative", "");
+
         currentPositiveKeywords = new ArrayList<>(Arrays.asList(positive.split(",")));
         currentNegativeKeywords = new ArrayList<>(Arrays.asList(negative.split(",")));
+
+        // Clean up empty keywords
         currentPositiveKeywords.removeAll(Collections.singleton(""));
         currentNegativeKeywords.removeAll(Collections.singleton(""));
-        isFilteringActive = !currentPositiveKeywords.isEmpty() || !currentNegativeKeywords.isEmpty();
-        showToast("Applying preset: " + presetName);
+
+        // Log the keywords being applied
+        Log.d("PRESET_APPLY", "Applying preset: " + presetName);
+        Log.d("PRESET_APPLY", "Positive keywords: " + currentPositiveKeywords);
+        Log.d("PRESET_APPLY", "Negative keywords: " + currentNegativeKeywords);
+
+        isFilteringActive = !currentPositiveKeywords.isEmpty();
+
+        Toast.makeText(this, getString(R.string.applying_preset, presetName), Toast.LENGTH_SHORT).show();
         refreshEmails();
     }
 
@@ -276,14 +419,18 @@ public class MainActivity extends AppCompatActivity {
     private boolean handleLeftDrawerSelection(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.nav_inbox) {
+            forceRefresh = true;
             clearFilters();
-            Toast.makeText(this, "Showing all emails", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.showing_all_emails, Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.nav_spam) {
+            Toast.makeText(this, R.string.jobs_selected, Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_trash) {
-            showToast("Trash selected");
+            Toast.makeText(this, R.string.trash_selected, Toast.LENGTH_SHORT).show();
         }
-        drawerLayout.closeDrawer(GravityCompat.START);
+        drawerLayout.closeDrawer(GravityCompat.START); // Close left drawer
         return true;
     }
+
     private boolean handleRightDrawerSelection(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.nav_manage_labels) {
@@ -293,12 +440,8 @@ public class MainActivity extends AppCompatActivity {
         } else if (item.getGroupId() == PRESET_MENU_GROUP_ID) {
             handlePresetSelection(item.getTitle().toString());
         }
-        drawerLayout.closeDrawer(GravityCompat.END);
+        drawerLayout.closeDrawer(GravityCompat.END); // Close right drawer
         return true;
-    }
-
-    private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     @Override

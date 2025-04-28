@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Email Orginizer SFE2</string>
+    <string name="app_name">Email Organizer SFE2</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="nav_header_title">Android Studio</string>
@@ -20,4 +20,26 @@
         <item>alp.akinci78@gmail.com</item>
         <item>demo@example.com</item>
     </string-array>
+
+    <!-- New strings for MainActivity -->
+    <string name="loading_initial_emails">Loading initial emails\u2026</string>
+    <string name="loaded_emails_count">Loaded %1$d%2$s emails</string>
+    <string name="filtered"> filtered</string>
+    <string name="error_loading_emails">Error loading emails</string>
+    <string name="failed_to_load_emails">Failed to load emails</string>
+    <string name="loaded_total_emails">Loaded %1$d%2$s emails (total)</string>
+    <string name="error_loading_more_emails">Error loading more emails</string>
+    <string name="applying_preset">Applying preset: %s</string>
+    <string name="jobs_selected">Jobs selected</string>
+    <string name="trash_selected">Trash selected</string>
+    <string name="compose_email">Compose Email</string>
+    <string name="manage_presets">Manage Presets</string>
+    <string name="create_preset">Create Preset</string>
+    <string name="inbox">Inbox</string>
+
+    <!-- Fixed typo in "emails" -->
+    <string name="loading_filtered_emails">Loading filtered emails\u2026</string>
+    <string name="showing_all_emails">Showing all emails</string>
+    <string name="error_loading_email">Error loading email</string>
+    <string name="error_loading_email_content">Error loading email content</string>
 </resources>

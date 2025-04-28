@@ -3,42 +3,46 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@drawable/background_gradient">
+    android:orientation="vertical">
 
-    <!-- Toolbar with Back Button -->
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/manage_toolbar"
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
-        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
-        app:title="Manage Presets"
-        app:navigationIcon="@android:drawable/ic_menu_revert" />
+        app:title="Email Details"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
-    <!-- Scrollable Presets List -->
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
         android:padding="16dp">
 
         <LinearLayout
-            android:id="@+id/presets_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/text_no_presets"
+                android:id="@+id/sender"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="No Presets"
-                android:textAlignment="center"
-                android:textColor="@android:color/darker_gray"
                 android:textSize="18sp"
-                android:visibility="gone"
-                android:padding="24dp" />
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/subject"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:id="@+id/content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
