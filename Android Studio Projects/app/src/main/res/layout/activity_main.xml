@@ -24,6 +24,8 @@
                 android:layout_marginTop="8dp">
 
                 <!-- Search bar (background layer) -->
+
+                <!-- Toolbar (floating on top) -->
                 <EditText
                     android:id="@+id/search_bar"
                     android:layout_width="match_parent"
@@ -34,11 +36,10 @@
                     android:imeOptions="actionSearch"
                     android:inputType="text"
                     android:paddingStart="42dp"
-                    android:paddingEnd="16dp"
+                    android:paddingEnd="42dp"
                     android:singleLine="true"
                     android:textSize="16sp" />
 
-                <!-- Toolbar (floating on top) -->
                 <androidx.appcompat.widget.Toolbar
                     android:id="@+id/toolbar"
                     android:layout_width="wrap_content"
@@ -103,15 +104,15 @@
     <!-- Left Drawer -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_left_view"
-        android:layout_width="215dp"
+        android:layout_width="250dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:background="@android:color/transparent"
         app:menu="@menu/left_menu"
         app:headerLayout="@layout/nav_header_main"
         app:itemBackground="@drawable/ani_menu_item_bg"
-        app:itemRippleColor="@drawable/ripple_overlay"
-        app:itemTextAppearance="@style/AniNavigationMenuItemStyle" />
+        app:itemTextAppearance="@style/AniNavigationMenuItemStyle"
+        app:itemIconTint="@color/black"/>
     <!-- Right Drawer -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_right_view"
@@ -120,7 +121,8 @@
         android:layout_gravity="end"
         android:background="@android:color/transparent"
         app:menu="@menu/right_menu"
-        app:headerLayout="@layout/nav_header_main"
+        app:headerLayout="@layout/right_nav_header_main"
         app:itemBackground="@drawable/ani_menu_item_bg"
-        app:itemTextAppearance="@style/AniNavigationMenuItemStyle" />
+        app:itemTextAppearance="@style/AniNavigationMenuItemStyle"
+        app:itemIconTint="@color/black" />
 </androidx.drawerlayout.widget.DrawerLayout>

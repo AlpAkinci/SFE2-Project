@@ -12,10 +12,10 @@
     <!-- Profile Image (Smaller) -->
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:contentDescription="@string/nav_header_desc"
-        android:src="@mipmap/alpaslan_round"
+        android:src="@android:drawable/ic_menu_compass"
         android:layout_marginStart="8dp" />
 
     <!-- Header Texts (Title & Subtitle) -->
@@ -28,16 +28,11 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Alpaslan Akinci"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-            android:textColor="@android:color/white"/>
-
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/nav_header_subtitle"
-            android:textColor="@android:color/white"/>
+            android:text="Preset Organizer"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"/>
     </LinearLayout>
 
 </LinearLayout>

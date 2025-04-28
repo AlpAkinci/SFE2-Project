@@ -522,7 +522,7 @@ public class MainActivity extends AppCompatActivity {
             forceRefresh = true;
             clearFilters();
             Toast.makeText(this, R.string.showing_all_emails, Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_spam) {
+        } else if (id == R.id.nav_snoozed) {
             Toast.makeText(this, R.string.jobs_selected, Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_trash) {
             Toast.makeText(this, R.string.trash_selected, Toast.LENGTH_SHORT).show();
