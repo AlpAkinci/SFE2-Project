@@ -6,12 +6,12 @@
     android:orientation="vertical">
 
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+        android:id="@+id/manage_toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:title="Email Details"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+        android:background="@drawable/rect_side_nav_bar"
+        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
+        app:title="Email Details" />
 
     <ScrollView
         android:layout_width="match_parent"
